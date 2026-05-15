@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Usage Live · próximos resets de Claude Code</title>
+<meta name="description" content="Contador en vivo hacia el próximo reset de Claude Code. Detecta si Anthropic resetea el uso antes de tiempo para todos los usuarios.">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #14141c;
+    --border: rgba(255,255,255,0.07);
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --accent: #34d399;
+    --warn: #f87171;
+    --alert-bg: rgba(248,113,113,0.12);
+  }
+  :root.light {
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.08);
+    --text: #0f172a;
+    --muted: #64748b;
+    --accent: #10b981;
+    --warn: #dc2626;
+    --alert-bg: rgba(220,38,38,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.2s, color 0.2s;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  header h1 span { color: var(--text); }
+  .theme-toggle {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.15s;
+  }
+  .theme-toggle:hover { background: var(--border); }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    gap: 48px;
+  }
+
+  .alert {
+    width: 100%;
+    max-width: 720px;
+    background: var(--alert-bg);
+    border: 1px solid var(--warn);
+    color: var(--warn);
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+  }
+  .alert.show { display: flex; }
+  .alert::before { content: "🚨"; font-size: 18px; }
+
+  .counter-block {
+    text-align: center;
+    width: 100%;
+  }
+  .counter-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .counter {
+    font-family: "SF Mono", Monaco, "Cascadia Code", Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+  }
+  .counter.main { font-size: clamp(56px, 12vw, 128px); }
+  .counter.sub  { font-size: clamp(28px, 5vw, 48px); color: var(--muted); }
+  .counter .unit { font-size: 0.35em; color: var(--muted); letter-spacing: 0.05em; margin-left: 4px; }
+
+  .history-section {
+    width: 100%;
+    max-width: 720px;
+    margin-top: 24px;
+  }
+  .history-section h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+  .history-list {
+    list-style: none;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .history-list li {
+    padding: 12px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .history-list li:last-child { border-bottom: none; }
+  .history-list li .ts { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .history-list li .delta { color: var(--warn); font-weight: 600; }
+  .history-empty {
+    padding: 14px 16px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  footer {
+    padding: 24px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    border-top: 1px solid var(--border);
+  }
+  footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  footer a:hover { text-decoration: underline; }
+
+  .updated {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>claude usage <span>live</span></h1>
+  <button id="themeToggle" class="theme-toggle" title="Cambiar tema">☾</button>
+</header>
+
+<main>
+  <div id="alert" class="alert">Anthropic reseteó el uso antes de tiempo para todos los usuarios.</div>
+
+  <div class="counter-block">
+    <div class="counter-label">Próximo reset semanal</div>
+    <div id="weeklyCounter" class="counter main">--:--:--</div>
+  </div>
+
+  <div class="counter-block">
+    <div class="counter-label">Próximo reset de sesión (5h)</div>
+    <div id="sessionCounter" class="counter sub">--:--:--</div>
+  </div>
+
+  <div class="history-section">
+    <h2>Histórico de resets anticipados detectados</h2>
+    <ul id="historyList" class="history-list">
+      <li class="history-empty">Sin resets anticipados detectados todavía.</li>
+    </ul>
+  </div>
+
+  <div id="updated" class="updated"></div>
+</main>
+
+<footer>
+  by <a href="https://github.com/missingus3r" target="_blank" rel="noopener">@missingus3r</a> ·
+  <a href="https://github.com/missingus3r/claude-usage-live" target="_blank" rel="noopener">repo en GitHub</a>
+</footer>
+
+<script>
+const DATA_URL = "./data/usage.json?t=" + Date.now();
+let dataState = null;
+
+function pad2(n) { return String(Math.max(0, Math.floor(n))).padStart(2, "0"); }
+
+function formatDelta(ms) {
+  if (!Number.isFinite(ms) || ms <= 0) return "00:00:00";
+  const total = Math.floor(ms / 1000);
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (d > 0) return d + "d " + pad2(h) + ":" + pad2(m) + ":" + pad2(s);
+  return pad2(h) + ":" + pad2(m) + ":" + pad2(s);
+}
+
+function tick() {
+  if (!dataState) return;
+  const now = Date.now();
+
+  const wTarget = dataState.next_weekly_reset_at ? new Date(dataState.next_weekly_reset_at).getTime() : null;
+  document.getElementById("weeklyCounter").textContent =
+    wTarget ? formatDelta(wTarget - now) : "n/d";
+
+  const sTarget = dataState.next_session_reset_at ? new Date(dataState.next_session_reset_at).getTime() : null;
+  document.getElementById("sessionCounter").textContent =
+    sTarget ? formatDelta(sTarget - now) : "n/d";
+}
+
+function renderHistory(history) {
+  const ul = document.getElementById("historyList");
+  if (!history || history.length === 0) {
+    ul.innerHTML = '<li class="history-empty">Sin resets anticipados detectados todavía.</li>';
+    return;
+  }
+  ul.innerHTML = "";
+  history.forEach(ev => {
+    const li = document.createElement("li");
+    const ts = new Date(ev.detected_at).toLocaleString("es-UY", {
+      day: "2-digit", month: "2-digit", year: "2-digit",
+      hour: "2-digit", minute: "2-digit",
+    });
+    li.innerHTML = `<span class="ts">${ts}</span><span class="delta">−${ev.drop}%</span>`;
+    ul.appendChild(li);
+  });
+}
+
+async function load() {
+  try {
+    const res = await fetch(DATA_URL, { cache: "no-store" });
+    const data = await res.json();
+    dataState = data;
+    if (data.early_reset_detected) {
+      document.getElementById("alert").classList.add("show");
+    }
+    renderHistory(data.early_reset_history || []);
+    if (data.updated_at) {
+      const upd = new Date(data.updated_at).toLocaleString("es-UY", {
+        day: "2-digit", month: "2-digit", year: "2-digit",
+        hour: "2-digit", minute: "2-digit",
+      });
+      document.getElementById("updated").textContent = "Última actualización: " + upd;
+    } else {
+      document.getElementById("updated").textContent = "Esperando primera lectura del tracker…";
+    }
+    tick();
+  } catch (e) {
+    document.getElementById("updated").textContent = "Error cargando data: " + e.message;
+  }
+}
+
+function applyTheme(t) {
+  document.documentElement.classList.toggle("light", t === "light");
+  document.getElementById("themeToggle").textContent = t === "light" ? "☀" : "☾";
+}
+
+document.getElementById("themeToggle").addEventListener("click", () => {
+  const next = document.documentElement.classList.contains("light") ? "dark" : "light";
+  localStorage.setItem("claude-usage-live-theme", next);
+  applyTheme(next);
+});
+
+applyTheme(localStorage.getItem("claude-usage-live-theme") || "dark");
+load();
+setInterval(tick, 1000);
+setInterval(load, 5 * 60 * 1000); // reload data every 5 min (json updates every 5h server-side)
+</script>
+</body>
+</html>

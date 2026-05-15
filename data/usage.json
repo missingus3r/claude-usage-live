@@ -1,0 +1,8 @@
+{
+  "updated_at": null,
+  "next_session_reset_at": null,
+  "next_weekly_reset_at": null,
+  "early_reset_detected": false,
+  "early_reset_event": null,
+  "early_reset_history": []
+}
