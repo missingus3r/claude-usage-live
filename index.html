@@ -232,11 +232,11 @@ function tick() {
 
   const wTarget = dataState.next_weekly_reset_at ? new Date(dataState.next_weekly_reset_at).getTime() : null;
   document.getElementById("weeklyCounter").textContent =
-    wTarget ? formatDelta(wTarget - now) : "n/d";
+    wTarget ? formatDelta(wTarget - now) : (dataState.next_weekly_reset_text || "n/d");
 
   const sTarget = dataState.next_session_reset_at ? new Date(dataState.next_session_reset_at).getTime() : null;
   document.getElementById("sessionCounter").textContent =
-    sTarget ? formatDelta(sTarget - now) : "n/d";
+    sTarget ? formatDelta(sTarget - now) : (dataState.next_session_reset_text || "n/d");
 }
 
 function renderHistory(history) {

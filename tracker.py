@@ -163,9 +163,45 @@ def fetch_claude_usage():
 # "May 19, 09:00 UTC". This best-effort converts them.
 # ──────────────────────────────────────────────────────────────────────
 def parse_reset_to_iso(text: str, now: dt.datetime) -> str | None:
+    """
+    Claude TUI formats observed in the wild:
+      "7:50pm (America/Montevideo)"        → session, today (or tomorrow if past)
+      "May 17, 10pm (America/Montevideo)"  → weekly, with date
+      "in 4h 30m"                          → relative
+    Local timezone is whatever is in parens (defaults to UTC if absent).
+    """
     if not text:
         return None
-    s = text.strip().lower()
+    orig = text.strip()
+    s = orig.lower()
+    months = {"jan":1,"feb":2,"mar":3,"apr":4,"may":5,"jun":6,
+              "jul":7,"aug":8,"sep":9,"oct":10,"nov":11,"dec":12}
+
+    # Pull explicit timezone in parens FROM ORIGINAL (zoneinfo is case-sensitive)
+    tz = now.tzinfo
+    tzm = re.search(r"\(([^)]+)\)", orig)
+    if tzm:
+        try:
+            import zoneinfo
+            tz = zoneinfo.ZoneInfo(tzm.group(1).strip())
+        except Exception:
+            tz = now.tzinfo
+    now_in_tz = now.astimezone(tz) if tz else now
+
+    def hh_from(h_str, ampm):
+        h = int(h_str)
+        if ampm == "pm" and h != 12: h += 12
+        if ampm == "am" and h == 12: h = 0
+        return h
+
+    # "now"
+    if re.search(r"\bnow\b", s):
+        return now.isoformat()
+
+    # "in 4d" / "in 4 days"
+    m = re.search(r"in\s+(\d+)\s*(?:d|days?)\b", s)
+    if m:
+        return (now + dt.timedelta(days=int(m.group(1)))).isoformat()
 
     # "in 4h 30m" / "in 12h" / "in 45m"
     m = re.search(r"in\s+(?:(\d+)\s*h)?\s*(?:(\d+)\s*m)?", s)
@@ -174,27 +210,55 @@ def parse_reset_to_iso(text: str, now: dt.datetime) -> str | None:
         mn = int(m.group(2) or 0)
         return (now + dt.timedelta(hours=h, minutes=mn)).isoformat()
 
-    # "now"
-    if "now" in s:
-        return now.isoformat()
-
-    # "Mon Apr 28 09:00" (current year, local time)
-    m = re.search(r"([a-z]{3})\s+([a-z]{3})\s+(\d{1,2})\s+(\d{1,2}):(\d{2})", s)
+    # "May 17, 10pm" / "May 17, 10:30pm" / "Apr 28 09:00"
+    m = re.search(r"([a-z]{3,4})\s+(\d{1,2})[, ]+\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?", s)
     if m:
-        months = {"jan":1,"feb":2,"mar":3,"apr":4,"may":5,"jun":6,
-                  "jul":7,"aug":8,"sep":9,"oct":10,"nov":11,"dec":12}
         try:
-            month = months[m.group(2)]
-            day = int(m.group(3))
-            hh = int(m.group(4))
-            mm = int(m.group(5))
-            year = now.year
-            cand = dt.datetime(year, month, day, hh, mm, tzinfo=now.tzinfo)
-            if cand < now:
-                cand = cand.replace(year=year + 1)
-            return cand.isoformat()
+            month = months[m.group(1)[:3]]
+            day = int(m.group(2))
+            ampm = m.group(5)
+            hh = hh_from(m.group(3), ampm) if ampm else int(m.group(3))
+            mm = int(m.group(4) or 0)
+            cand = dt.datetime(now_in_tz.year, month, day, hh, mm, tzinfo=tz)
+            if cand < now_in_tz:
+                cand = cand.replace(year=now_in_tz.year + 1)
+            return cand.astimezone(dt.timezone.utc).isoformat()
         except Exception:
             pass
+
+    # "7:50pm" or "10pm" (time only → today or tomorrow if past)
+    m = re.search(r"(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b", s)
+    if m:
+        try:
+            hh = hh_from(m.group(1), m.group(3))
+            mm = int(m.group(2) or 0)
+            cand = now_in_tz.replace(hour=hh, minute=mm, second=0, microsecond=0)
+            if cand < now_in_tz:
+                cand = cand + dt.timedelta(days=1)
+            return cand.astimezone(dt.timezone.utc).isoformat()
+        except Exception:
+            pass
+
+    # "May 19" (no time → assume midnight in tz)
+    m = re.search(r"\b([a-z]{3,4})\s+(\d{1,2})\b", s)
+    if m:
+        try:
+            month = months[m.group(1)[:3]]
+            day = int(m.group(2))
+            cand = dt.datetime(now_in_tz.year, month, day, tzinfo=tz)
+            if cand < now_in_tz:
+                cand = cand.replace(year=now_in_tz.year + 1)
+            return cand.astimezone(dt.timezone.utc).isoformat()
+        except Exception:
+            pass
+
+    # "tomorrow at HH:MM"
+    m = re.search(r"tomorrow(?:\s+at\s+(\d{1,2}):(\d{2}))?", s)
+    if m:
+        base = now + dt.timedelta(days=1)
+        if m.group(1) and m.group(2):
+            base = base.replace(hour=int(m.group(1)), minute=int(m.group(2)), second=0)
+        return base.isoformat()
 
     return None
 
@@ -295,6 +359,9 @@ def main():
         "updated_at": now_iso,
         "next_session_reset_at": session_reset_iso,
         "next_weekly_reset_at": week_reset_iso,
+        # raw text for transparency + fallback rendering if ISO parsing fails
+        "next_session_reset_text": (data.get("session") or {}).get("resets_text"),
+        "next_weekly_reset_text": (data.get("weekAll") or {}).get("resets_text"),
         "early_reset_detected": bool(early),
         "early_reset_event": event,
         "early_reset_history": history,
