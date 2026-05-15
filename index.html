@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Claude Usage Live · countdown to the next Claude Code reset</title>
 <meta name="description" content="Live countdown to the next Claude Code reset. Flags if Anthropic resets all users early.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23D97757' d='M32 4 L36 24 L52 16 L40 32 L52 48 L36 40 L32 60 L28 40 L12 48 L24 32 L12 16 L28 24 Z'/%3E%3C/svg%3E">
 <style>
   :root {
     --bg: #0a0a0f;
@@ -109,6 +110,25 @@
     text-align: center;
     width: 100%;
   }
+  .hero-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: -16px;
+  }
+  .hero-logo svg {
+    width: 56px;
+    height: 56px;
+    filter: drop-shadow(0 0 24px rgba(217,119,87,0.25));
+  }
+  .hero-logo-text {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 600;
+  }
   .counter-label {
     font-size: 11px;
     text-transform: uppercase;
@@ -210,6 +230,13 @@
 </header>
 
 <main>
+  <div class="hero-logo">
+    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-label="Claude Code">
+      <path fill="#D97757" d="M32 4 L36 24 L52 16 L40 32 L52 48 L36 40 L32 60 L28 40 L12 48 L24 32 L12 16 L28 24 Z"/>
+    </svg>
+    <div class="hero-logo-text">Claude Code</div>
+  </div>
+
   <div id="alert" class="alert" data-i18n="alert"></div>
 
   <div class="counter-block">
