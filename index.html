@@ -112,26 +112,34 @@
   }
   .hero-logo {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 14px;
-    margin-bottom: -12px;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: -8px;
+    flex-wrap: wrap;
   }
   .hero-logo .mascot {
-    width: 96px;
+    width: 64px;
     height: auto;
     image-rendering: pixelated;
-    filter: drop-shadow(0 0 28px rgba(217,119,87,0.30));
+    filter: drop-shadow(0 0 18px rgba(217,119,87,0.30));
   }
   .hero-logo .wordmark {
-    width: clamp(200px, 38vw, 320px);
+    width: clamp(140px, 26vw, 220px);
     height: auto;
     image-rendering: pixelated;
   }
-  /* Wordmark is black on transparent — invert in dark mode so it stays readable */
   :root:not(.light) .hero-logo .wordmark {
-    filter: invert(1) drop-shadow(0 0 10px rgba(255,255,255,0.05));
+    filter: invert(1);
   }
+  .header-mascot {
+    width: 22px;
+    height: auto;
+    image-rendering: pixelated;
+    vertical-align: middle;
+  }
+  header h1 { display: flex; align-items: center; gap: 8px; }
   .counter-label {
     font-size: 11px;
     text-transform: uppercase;
@@ -221,7 +229,7 @@
 <body>
 
 <header>
-  <h1>claude usage <span>live</span></h1>
+  <h1><img src="./assets/mascot.png" alt="" class="header-mascot">claude usage <span>live</span></h1>
   <div class="header-controls">
     <select id="langSelect" class="lang-select" aria-label="Language">
       <option value="es">ES</option>
