@@ -53,17 +53,29 @@
   header h1 span { color: var(--text); }
   .theme-toggle,
   .lang-select {
-    background: transparent;
+    background: var(--surface);
     border: 1px solid var(--border);
     color: var(--text);
     padding: 6px 10px;
     border-radius: 8px;
     cursor: pointer;
     font-size: 13px;
-    transition: background 0.15s;
+    transition: background 0.15s, color 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
   }
   .theme-toggle:hover, .lang-select:hover { background: var(--border); }
-  .lang-select { font-family: inherit; }
+  .lang-select {
+    font-family: inherit;
+    padding-right: 24px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%2364748b' d='M0 0l5 6 5-6z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+  }
+  .lang-select option {
+    background: var(--surface);
+    color: var(--text);
+  }
   .header-controls { display: flex; gap: 8px; align-items: center; }
 
   main {
