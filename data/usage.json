@@ -6,5 +6,14 @@
   "next_weekly_reset_text": "May 17, 10pm (America/Montevideo)",
   "early_reset_detected": false,
   "early_reset_event": null,
-  "early_reset_history": []
+  "early_reset_history": [
+    {
+      "detected_at": "2026-05-15T19:00:00+00:00",
+      "previous_pct": null,
+      "current_pct": null,
+      "drop": 100,
+      "expected_reset_at": "2026-05-18T01:00:00+00:00",
+      "note": "Manual entry — Anthropic reset usage early at ~16:00 Uruguay time (per user report). The tracker wasn't in a run window when this happened."
+    }
+  ]
 }
