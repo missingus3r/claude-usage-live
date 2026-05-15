@@ -166,19 +166,24 @@
   }
   .progress {
     width: clamp(220px, 60vw, 480px);
-    height: 10px;
-    margin: 12px auto 0;
+    margin: 14px auto 0;
+    display: grid;
+    grid-template-columns: repeat(20, 1fr);
+    gap: 3px;
+    padding: 2px;
+    background: transparent;
+  }
+  .progress .cell {
+    height: 14px;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 999px;
-    overflow: hidden;
+    border-radius: 0;
+    transition: background 0.2s linear, border-color 0.2s linear;
   }
-  .progress .bar {
-    height: 100%;
-    width: 0%;
-    border-radius: 999px;
-    background: var(--accent);
-    transition: width 0.4s linear, background 0.4s linear;
+  .progress .cell.filled {
+    border-color: transparent;
+    background: var(--cell-color, var(--accent));
+    box-shadow: 0 0 6px var(--cell-color, var(--accent));
   }
 
   .history-section {
@@ -274,14 +279,14 @@
   <div class="counter-block">
     <div class="counter-label" data-i18n="weekly_label"></div>
     <div id="weeklyCounter" class="counter main">--:--:--</div>
-    <div class="progress"><div id="weeklyBar" class="bar"></div></div>
+    <div id="weeklyBar" class="progress"></div>
     <div id="weeklyLocal" class="counter-local"></div>
   </div>
 
   <div class="counter-block">
     <div class="counter-label" data-i18n="session_label"></div>
     <div id="sessionCounter" class="counter sub">--:--:--</div>
-    <div class="progress"><div id="sessionBar" class="bar"></div></div>
+    <div id="sessionBar" class="progress"></div>
     <div id="sessionLocal" class="counter-local"></div>
   </div>
 
@@ -396,22 +401,38 @@ function formatLocal(iso) {
 
 const WEEKLY_PERIOD_MS = 7 * 24 * 60 * 60 * 1000;   // 7d
 const SESSION_PERIOD_MS = 5 * 60 * 60 * 1000;       // 5h
+const BAR_CELLS = 20;
+
+function ensureBarCells(barEl) {
+  if (barEl.childElementCount === BAR_CELLS) return;
+  barEl.innerHTML = "";
+  for (let i = 0; i < BAR_CELLS; i++) {
+    const c = document.createElement("span");
+    c.className = "cell";
+    barEl.appendChild(c);
+  }
+}
 
 function updateBar(barEl, target, periodMs, now) {
-  if (!barEl || !target) {
-    barEl && (barEl.style.width = "0%");
+  if (!barEl) return;
+  ensureBarCells(barEl);
+  if (!target) {
+    barEl.style.setProperty("--cell-color", "var(--accent)");
+    [...barEl.children].forEach(c => c.classList.remove("filled"));
     return;
   }
   const start = target - periodMs;
   const elapsed = now - start;
   const pct = Math.max(0, Math.min(100, (elapsed / periodMs) * 100));
-  barEl.style.width = pct + "%";
-  // Green (fresh) → Yellow (mid) → Red (almost out)
   let color;
-  if (pct < 50)       color = "#34d399"; // green (post-reset)
-  else if (pct < 80)  color = "#fbbf24"; // yellow (closing in)
-  else                color = "#f87171"; // red (about to reset)
-  barEl.style.background = color;
+  if (pct < 50)      color = "#34d399"; // green (post-reset)
+  else if (pct < 80) color = "#fbbf24"; // yellow (closing in)
+  else               color = "#f87171"; // red (about to reset)
+  barEl.style.setProperty("--cell-color", color);
+  const filledCount = Math.round((pct / 100) * BAR_CELLS);
+  [...barEl.children].forEach((cell, i) => {
+    cell.classList.toggle("filled", i < filledCount);
+  });
 }
 
 function tick() {
