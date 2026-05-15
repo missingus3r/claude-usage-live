@@ -164,6 +164,22 @@
     margin-top: 6px;
     font-variant-numeric: tabular-nums;
   }
+  .progress {
+    width: clamp(220px, 60vw, 480px);
+    height: 10px;
+    margin: 12px auto 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress .bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: var(--accent);
+    transition: width 0.4s linear, background 0.4s linear;
+  }
 
   .history-section {
     width: 100%;
@@ -196,7 +212,14 @@
   }
   .history-list li:last-child { border-bottom: none; }
   .history-list li .ts { color: var(--muted); font-variant-numeric: tabular-nums; }
-  .history-list li .delta { color: var(--warn); font-weight: 600; }
+  .history-list li .delta {
+    color: var(--accent);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    background: rgba(52,211,153,0.12);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
   .history-empty {
     padding: 14px 16px;
     text-align: center;
@@ -251,12 +274,14 @@
   <div class="counter-block">
     <div class="counter-label" data-i18n="weekly_label"></div>
     <div id="weeklyCounter" class="counter main">--:--:--</div>
+    <div class="progress"><div id="weeklyBar" class="bar"></div></div>
     <div id="weeklyLocal" class="counter-local"></div>
   </div>
 
   <div class="counter-block">
     <div class="counter-label" data-i18n="session_label"></div>
     <div id="sessionCounter" class="counter sub">--:--:--</div>
+    <div class="progress"><div id="sessionBar" class="bar"></div></div>
     <div id="sessionLocal" class="counter-local"></div>
   </div>
 
@@ -369,6 +394,26 @@ function formatLocal(iso) {
   return t("local_at").replace("{time}", time) + " (" + tz + ")";
 }
 
+const WEEKLY_PERIOD_MS = 7 * 24 * 60 * 60 * 1000;   // 7d
+const SESSION_PERIOD_MS = 5 * 60 * 60 * 1000;       // 5h
+
+function updateBar(barEl, target, periodMs, now) {
+  if (!barEl || !target) {
+    barEl && (barEl.style.width = "0%");
+    return;
+  }
+  const start = target - periodMs;
+  const elapsed = now - start;
+  const pct = Math.max(0, Math.min(100, (elapsed / periodMs) * 100));
+  barEl.style.width = pct + "%";
+  // Green (fresh) → Yellow (mid) → Red (almost out)
+  let color;
+  if (pct < 50)       color = "#34d399"; // green (post-reset)
+  else if (pct < 80)  color = "#fbbf24"; // yellow (closing in)
+  else                color = "#f87171"; // red (about to reset)
+  barEl.style.background = color;
+}
+
 function tick() {
   if (!dataState) return;
   const now = Date.now();
@@ -378,12 +423,14 @@ function tick() {
   document.getElementById("weeklyCounter").textContent =
     wTarget ? formatDelta(wTarget - now) : (dataState.next_weekly_reset_text || t("nd"));
   document.getElementById("weeklyLocal").textContent = wIso ? formatLocal(wIso) : "";
+  updateBar(document.getElementById("weeklyBar"), wTarget, WEEKLY_PERIOD_MS, now);
 
   const sIso = dataState.next_session_reset_at;
   const sTarget = sIso ? new Date(sIso).getTime() : null;
   document.getElementById("sessionCounter").textContent =
     sTarget ? formatDelta(sTarget - now) : (dataState.next_session_reset_text || t("nd"));
   document.getElementById("sessionLocal").textContent = sIso ? formatLocal(sIso) : "";
+  updateBar(document.getElementById("sessionBar"), sTarget, SESSION_PERIOD_MS, now);
 }
 
 function renderHistory(history) {
@@ -399,7 +446,7 @@ function renderHistory(history) {
       day: "2-digit", month: "2-digit", year: "2-digit",
       hour: "2-digit", minute: "2-digit",
     });
-    li.innerHTML = `<span class="ts">${ts}</span><span class="delta">−${ev.drop}%</span>`;
+    li.innerHTML = `<span class="ts">${ts}</span><span class="delta">+${ev.drop}%</span>`;
     ul.appendChild(li);
   });
 }
