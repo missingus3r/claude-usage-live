@@ -127,6 +127,12 @@
   .counter.main { font-size: clamp(56px, 12vw, 128px); }
   .counter.sub  { font-size: clamp(28px, 5vw, 48px); color: var(--muted); }
   .counter .unit { font-size: 0.35em; color: var(--muted); letter-spacing: 0.05em; margin-left: 4px; }
+  .counter-local {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-variant-numeric: tabular-nums;
+  }
 
   .history-section {
     width: 100%;
@@ -209,11 +215,13 @@
   <div class="counter-block">
     <div class="counter-label" data-i18n="weekly_label"></div>
     <div id="weeklyCounter" class="counter main">--:--:--</div>
+    <div id="weeklyLocal" class="counter-local"></div>
   </div>
 
   <div class="counter-block">
     <div class="counter-label" data-i18n="session_label"></div>
     <div id="sessionCounter" class="counter sub">--:--:--</div>
+    <div id="sessionLocal" class="counter-local"></div>
   </div>
 
   <div class="history-section">
@@ -250,6 +258,7 @@ const I18N = {
     footer_by: "by",
     footer_repo: "repo en GitHub",
     nd: "n/d",
+    local_at: "→ {time} hora local",
     locale: "es-UY",
   },
   en: {
@@ -264,6 +273,7 @@ const I18N = {
     footer_by: "by",
     footer_repo: "GitHub repo",
     nd: "n/a",
+    local_at: "→ {time} your local time",
     locale: "en-US",
   },
   pt: {
@@ -278,6 +288,7 @@ const I18N = {
     footer_by: "por",
     footer_repo: "repo no GitHub",
     nd: "n/d",
+    local_at: "→ {time} no seu horário local",
     locale: "pt-BR",
   },
 };
@@ -312,17 +323,31 @@ function formatDelta(ms) {
   return pad2(h) + ":" + pad2(m) + ":" + pad2(s);
 }
 
+function formatLocal(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  // user's local timezone, automatic via Intl
+  const opts = { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" };
+  const time = d.toLocaleString(t("locale"), opts);
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return t("local_at").replace("{time}", time) + " (" + tz + ")";
+}
+
 function tick() {
   if (!dataState) return;
   const now = Date.now();
 
-  const wTarget = dataState.next_weekly_reset_at ? new Date(dataState.next_weekly_reset_at).getTime() : null;
+  const wIso = dataState.next_weekly_reset_at;
+  const wTarget = wIso ? new Date(wIso).getTime() : null;
   document.getElementById("weeklyCounter").textContent =
     wTarget ? formatDelta(wTarget - now) : (dataState.next_weekly_reset_text || t("nd"));
+  document.getElementById("weeklyLocal").textContent = wIso ? formatLocal(wIso) : "";
 
-  const sTarget = dataState.next_session_reset_at ? new Date(dataState.next_session_reset_at).getTime() : null;
+  const sIso = dataState.next_session_reset_at;
+  const sTarget = sIso ? new Date(sIso).getTime() : null;
   document.getElementById("sessionCounter").textContent =
     sTarget ? formatDelta(sTarget - now) : (dataState.next_session_reset_text || t("nd"));
+  document.getElementById("sessionLocal").textContent = sIso ? formatLocal(sIso) : "";
 }
 
 function renderHistory(history) {
