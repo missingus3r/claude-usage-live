@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-05-15T18:40:01.729913+00:00",
-  "next_session_reset_at": "2026-05-15T22:50:00+00:00",
+  "updated_at": "2026-05-15T23:17:01.973334+00:00",
+  "next_session_reset_at": "2026-05-16T03:50:00+00:00",
   "next_weekly_reset_at": "2026-05-18T01:00:00+00:00",
-  "next_session_reset_text": "7:50pm (America/Montevideo)",
+  "next_session_reset_text": "12:50am (America/Montevideo)",
   "next_weekly_reset_text": "May 17, 10pm (America/Montevideo)",
   "early_reset_detected": false,
   "early_reset_event": null,
@@ -13,7 +13,7 @@
       "current_pct": null,
       "drop": 100,
       "expected_reset_at": "2026-05-18T01:00:00+00:00",
-      "note": "Manual entry — Anthropic reset usage early at ~16:00 Uruguay time (per user report). The tracker wasn't in a run window when this happened."
+      "note": "Manual entry \u2014 Anthropic reset usage early at ~16:00 Uruguay time (per user report). The tracker wasn't in a run window when this happened."
     }
   ]
 }
