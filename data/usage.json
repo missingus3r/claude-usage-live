@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-05-31T23:17:01.200525+00:00",
-  "next_session_reset_at": "2026-06-01T00:40:00+00:00",
-  "next_weekly_reset_at": "2026-06-01T01:00:00+00:00",
-  "next_session_reset_text": "9:40pm (America/Montevideo)",
-  "next_weekly_reset_text": "May 31, 10pm (America/Montevideo)",
+  "updated_at": "2026-06-01T03:17:02.036618+00:00",
+  "next_session_reset_at": "2026-06-01T05:40:00+00:00",
+  "next_weekly_reset_at": "2026-06-08T01:00:00+00:00",
+  "next_session_reset_text": "2:40am (America/Montevideo)",
+  "next_weekly_reset_text": "Jun 7, 10pm (America/Montevideo)",
   "early_reset_detected": false,
   "early_reset_event": null,
   "early_reset_history": [
