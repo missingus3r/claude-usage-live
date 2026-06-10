@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-06-09T23:17:01.611107+00:00",
-  "next_session_reset_at": "2026-06-10T02:40:00+00:00",
+  "updated_at": "2026-06-10T03:17:01.311270+00:00",
+  "next_session_reset_at": "2026-06-10T07:40:00+00:00",
   "next_weekly_reset_at": "2026-06-15T01:00:00+00:00",
-  "next_session_reset_text": "11:40pm (America/Montevideo)",
+  "next_session_reset_text": "4:40am (America/Montevideo)",
   "next_weekly_reset_text": "Jun 14, 10pm (America/Montevideo)",
   "early_reset_detected": false,
   "early_reset_event": null,
