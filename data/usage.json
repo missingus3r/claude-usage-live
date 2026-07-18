@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-07-17T23:17:01.329034+00:00",
-  "next_session_reset_at": "2026-07-18T01:00:00+00:00",
+  "updated_at": "2026-07-18T03:17:01.361124+00:00",
+  "next_session_reset_at": "2026-07-18T06:00:00+00:00",
   "next_weekly_reset_at": "2026-07-20T01:00:00+00:00",
-  "next_session_reset_text": "10pm (America/Montevideo)",
-  "next_weekly_reset_text": "Jul 19, 10pm (America/Montevideo)",
+  "next_session_reset_text": "3am (America/Montevideo)",
+  "next_weekly_reset_text": "Jul 19, 10pm (America/Montevideo) +50% weekly limits promo through Jul 19 \u00b7 clau.de/cc-july-promo",
   "early_reset_detected": false,
   "early_reset_event": null,
   "early_reset_history": [
